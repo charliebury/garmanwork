@@ -47,14 +47,14 @@ class StructurePDB(object):
 
     # To determine whether the current atom is a constituent of protein or nucleic acid    
     def protein_or_nucleicacid(self):
-        if self.basetype in ('DA','DC','DG','DT','DU'):
+        if self.basetype in ('DA','DC','DG','DT','A','C','G','U'):
             component_type = 'nucleic acid'
         else:
             component_type = 'protein'  
         return component_type
         
     def side_or_main(self):
-        if self.basetype in ('DA','DC','DG','DT','DU'):
+        if self.basetype in ('DA','DC','DG','DT','A','C','G','U'):
             if self.atomtype not in ("P","OP1","O5'","C5'","C4'","C3'","O3'","C2'","C1'","O4'","OP2"):
                 sideormain = 'sidechain'
             else:

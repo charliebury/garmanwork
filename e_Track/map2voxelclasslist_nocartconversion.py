@@ -177,7 +177,7 @@ def densmap2class(mapfilename,maptype,atom_indices):
     else:
         print 'Unknown map type --> terminating script'
         sys.exit()
-    
+
     rho.vxls_val = density_final
     
     if maptype in ('atom_map'):
@@ -262,16 +262,12 @@ def densmap2class_readheader(mapfilename):
 ###----------------###----------------###----------------###----------------###
 ###############################################################################
 #todo: need to check both file sizes are same!
-def densmap2class_readvoxels(atommapfilename,densmapfilename,densitystart):
-
-    # open electron density 'atom' .map file here 
-    binarymapfile_atom = open(atommapfilename,'rb')    
-    
+def densmap2class_readvoxels(densmapfilename,densitystart):
+        
     # open electron density 'density' .map file here 
-    binarymapfile_dens = open(atommapfilename,'rb')    
+    binarymapfile_dens = open(densmapfilename,'rb')    
     
     # next seek start of electron density data
-    binarymapfile_atom.seek(densitystart,0)
     binarymapfile_dens.seek(densitystart,0)
 
     # if electron density written in floats (which is to be expected 
@@ -283,20 +279,13 @@ def densmap2class_readvoxels(atommapfilename,densmapfilename,densitystart):
     vxl_list = []
     # create list of voxel objects in class voxel_density 
     while True:
-        data_atom = binarymapfile_atom.read(struct_len)
         data_dens = binarymapfile_dens.read(struct_len)
 
-        if not data_atom: break
-        s_atom = struct.unpack(struct_fmt,data_atom)[0]
+        if not data_dens: break
         s_dens = struct.unpack(struct_fmt,data_dens)[0]
         
-        # this only includes voxels associated with atoms (value not zero)
-        if int(s_atom) == 0:
-            continue
-        else:    
-            vxl_list.append(voxel_density(int(s_atom)/100,s_dens))        
+        vxl_list.append(s_dens)        
     
-    binarymapfile_atom.close()
     binarymapfile_dens.close()
     
     return vxl_list    

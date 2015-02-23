@@ -65,7 +65,6 @@ def maps2atmdensity(where,pdbname,mapfilname1,maptype1,mapfilname2,maptype2):
     # find number of atoms in structure
     num_atoms = len(PDBarray)
     
-    
     # read in the atom map
     print '------------------------------------------------'
     print 'Atom map read in: '

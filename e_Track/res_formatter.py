@@ -74,34 +74,16 @@ def densper_resatom_NOresidueclass(where,PDBarray,toplot,densmet,pdbname):
         
     # first ensure PDB list ordered by atom number
     PDBarray.sort(key=lambda x: (x.basetype,x.atomnum))
-    
+      
+    # find list of protein residues and nucleic acids
+    # present in structure (with repeated names removed)
     resi_list = [atom.basetype for atom in PDBarray]
-    # find list of protein residues present in structure (with repeated 
-    # names removed)
-    aminoacids = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 
-                  'GLY', 'HIS', 'ILE', 'LEU', 'LYS', 'MET', 'PHE', 
-                  'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL']   
-
-    restype_disjoint = []
-    appendres = restype_disjoint.append                      
+    restype_list = []
+    appendres = restype_list.append                      
     for res in resi_list:
-        if res not in restype_disjoint and res in aminoacids:
+        if res not in restype_list:
             appendres(res)
-    restype_disjoint.sort()
-    
-    # find list of DNA nucleotides present in structure (with repeated 
-    # names removed)
-    DNAbases = ['DA','DC','DG','DT']   
-    basetype_disjoint = []
-    appendbase = basetype_disjoint.append                      
-    for res in resi_list:
-        if res not in basetype_disjoint and res in DNAbases:
-            appendbase(res)
-    basetype_disjoint.sort()
-                   
-    # combine two lists above to make the full list of residues and bases
-    restype_list  = restype_disjoint + basetype_disjoint
-    
+    restype_list.sort()
 
     residueArray = []
     for res in restype_list:
@@ -113,7 +95,6 @@ def densper_resatom_NOresidueclass(where,PDBarray,toplot,densmet,pdbname):
         %(res_obj.name,str(res_obj.frequency))
         print 'Maximum size of residue calculated to be: %s'\
         %str(res_obj.atm_names) 
-      
       
         # determine the density metric to use and create list of densities
         # from 'atms_bytype' attribute for the residue object

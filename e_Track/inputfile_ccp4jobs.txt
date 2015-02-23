@@ -1,28 +1,28 @@
-pdbIN /Users/charlie/DPhil/YEAR1/FEB/2BN3/Charlie_MTZs/set10_refmac1.pdb
+pdbIN /Users/charlie/DPhil/YEAR1/Feb/TRAP_RNA/TRAPRNAfiles_for_eTrack/trap10.pdb
 #
-runname 2BN3damage
+runname TRAPRNAdamage
 #
-foldername ../2BN3damage_11feb2014/
+foldername ../TRAPRNAdamage_16feb2015/
 #
 dataset 10
 #
-sfall_symm 199
+sfall_symm 5
 #
 #sfall_GRID
 #
-mtzIN /Users/charlie/DPhil/YEAR1/FEB/2BN3/scaleit_output/1and10_merged_tominsulin_4feb2015_scaleit1.mtz
+mtzIN /Users/charlie/DPhil/YEAR1/Feb/TRAP_RNA/TRAPRNAfiles_for_eTrack/trap10.mtz
 #
-fft_Fobs_dam F_set10
+fft_Fobs_dam F_trap10
 #
-fft_SIGobs_dam SIGF_set10
+fft_SIGobs_dam SIGF_trap10
 #
-fft_Fobs_init F_New
+fft_Fobs_init F_trapd_dose1
 #
-fft_SIGobs_init SIGF_New
+fft_SIGobs_init SIGF_trapd_dose1
 #
-fft_PHIC_dam PHIC10
+fft_PHIC_dam PHIC_trap10
 #
-fft_FOM_dam FOM10
+fft_FOM_dam FOM_trap10
 #
 fft_FOM_init FOM
 #

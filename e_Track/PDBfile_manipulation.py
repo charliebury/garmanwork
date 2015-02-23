@@ -8,6 +8,8 @@ from classholder_v2 import StructurePDB,singlePDB,multiPDB
 import numpy as np
 from operator import sub,truediv
 from random import randint
+from progbar import progress
+
 
 ###############################################################################
 def PDBtoCLASSARRAY(pdbfilename,PDBarray):
@@ -324,7 +326,15 @@ def multiARRAY_diffatomnumbers(data_list):
     print '------------------------------------------------'
     print 'Locating common atoms to ALL datasets...'
     print 'SUMMARY:'
+
+    i = 0
+    num_atoms = len(data_list[0])
+    
     for atom in data_list[0]:
+        i += 1
+        # unessential loading bar add-in
+        progress(i, num_atoms, suffix='')
+
         atm_counter = 0
         
         Bfactor_comb = []
