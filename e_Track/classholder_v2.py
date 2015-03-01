@@ -100,7 +100,7 @@ class singlePDB(StructurePDB):
         X_coord=0,Y_coord=0,Z_coord=0,Bfactor=0,Occupancy=0,meandensity=0,
         maxdensity=0,mindensity=0,mediandensity=0,atomidentifier="",
         numsurroundatoms=0,vdw_rad=0,bdam=0,bdamchange=0,
-        Bfactorchange=0,mapvoxels=[],mapvoxels_dist=[],mapvoxels_filtered=[],thresval=0):
+        Bfactorchange=0,numvoxels=0):
             
         super(singlePDB, self).__init__(
             atomnum,residuenum,atomtype,basetype,chaintype,X_coord,Y_coord,
@@ -114,13 +114,9 @@ class singlePDB(StructurePDB):
         self.mediandensity = mediandensity
         self.bdam = bdam
         self.bdamchange = bdamchange
-        self.Bfactorchange = Bfactorchange
-        
-        self.mapvoxels = mapvoxels
-        self.mapvoxels_dist = mapvoxels_dist
-        self.mapvoxels_filtered = mapvoxels_filtered
-        self.thresval = thresval
-        
+        self.Bfactorchange = Bfactorchange        
+        self.numvoxels = numvoxels      
+    
     def vdw_bfac(self):
         return 4*(math.sqrt(float(self.Bfactor) + 25))/(2 * math.pi)
 ###############################################################################
@@ -137,7 +133,7 @@ class multiPDB(StructurePDB):
         maxdensity=[],mindensity=[],mediandensity=[],atomidentifier="",
         numsurroundatoms=[],bdam=[],bdamchange=[],Bfactorchange=[],
         meandensity_norm=[],maxdensity_norm=[],mindensity_norm=[],
-        mediandensity_norm=[]):
+        mediandensity_norm=[],numvoxels=[]):
             
         super(multiPDB, self).__init__(
             atomnum,residuenum,atomtype,basetype,chaintype,X_coord,Y_coord,
@@ -156,6 +152,7 @@ class multiPDB(StructurePDB):
         self.maxdensity_norm = maxdensity_norm
         self.mindensity_norm = mindensity_norm
         self.mediandensity_norm = mediandensity_norm
+        self.numvoxels = numvoxels
 ###############################################################################
       
 

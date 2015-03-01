@@ -240,7 +240,6 @@ def TRAPringcompare_format(PDBmulti):
 					   atom.residuenum == otheratom.residuenum and
 					   atom.basetype == otheratom.basetype):
 						atomperchain.append(otheratom)
-						print otheratom.atomtype
 			atomsbychain.append(atomperchain)
 
 	# only want to include atoms which are present in all refined chains
@@ -249,7 +248,7 @@ def TRAPringcompare_format(PDBmulti):
 	atomsbychain_present = []
 	for j in range(0,len(atomsbychain)):
 		if len(atomsbychain[j]) != (len(nonRNAbound) + len(RNAbound)):
-			print 'found!'
+			pass
 		else:
 			atomsbychain_present.append(atomsbychain[j])
 
@@ -279,12 +278,20 @@ def TRAPringcompare_plot(atomsbychain_present,atomtype,resitype,resinum,densmet)
 
 	for d_num in range(1,10):
 		ax = plt.subplot(3, 3, d_num)
-		if densmet == 'min':
+		if densmet == 'mindensitychange':
 			y = [atom.mindensity[d_num-1] for atom in atomsbychain_present[counter]]
-		elif densmet == 'mean':
+		elif densmet == 'meandensitychange':
 			y = [atom.meandensity[d_num-1] for atom in atomsbychain_present[counter]]
-		elif densmet == 'max':
+		elif densmet == 'maxdensitychange':
 			y = [atom.maxdensity[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bfactor':
+			y = [atom.Bfactor[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bfactorchange':
+			y = [atom.Bfactorchange[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bdamage':
+			y = [atom.bdam[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'bdamagechange':
+			y = [atom.bdamchange[d_num-1] for atom in atomsbychain_present[counter]]
 		else:
 			print 'unrecognised density metric\n---> terminating script'
 			sys.exit()
@@ -296,16 +303,118 @@ def TRAPringcompare_plot(atomsbychain_present,atomtype,resitype,resinum,densmet)
 	f.text(0.5, 0.04, 'chain number', ha='center',fontsize=18)
 	f.text(0.04, 0.5, str(densmet)+' density loss', va='center', rotation='vertical',fontsize=18)
 
-	f.suptitle(str(densmet)+' density change vs chain number: '+\
+	f.suptitle(str(densmet)+' vs chain number: '+\
 		       str(atomsbychain_present[counter][0].atomtype) + ' ' +\
 		       str(atomsbychain_present[counter][0].residuenum) + ' ' +\
 		       str(atomsbychain_present[counter][0].basetype),fontsize=24)
 	plt.setp(f.axes)
 
-	f.savefig('%s_densitychange_vs_chain_number_%s_%s_%s.png' %(str(densmet),str(atomsbychain_present[counter][0].atomtype),
+	f.savefig('%s_vs_chain_number_%s_%s_%s.png' %(str(densmet),str(atomsbychain_present[counter][0].atomtype),
 		       										        str(atomsbychain_present[counter][0].residuenum),
 		       											    str(atomsbychain_present[counter][0].basetype)))
 
+
+
+
+def TRAPringcompare_vioplot(atomsbychain_present,atomtype,resitype,resinum,densmet):
+	# following on from formatting function above, plots a violin plot for density or 
+	# Bfactor/Bdamage change for corresponding atom found in all chains against chain 
+	# number, with a separate subplot for each dataset number. Separate violin for 
+	# RNA-bound and not bound.
+
+	# determine the desired atom by atom type, residue type and residue number
+	counter = -1
+	for atom in atomsbychain_present:
+		counter += 1
+		if (atom[0].atomtype == atomtype and
+		   atom[0].basetype == resitype and
+		   atom[0].residuenum == resinum):
+			break
+
+	# Create a figure instance
+	sns.set_palette("deep", desat=.6)
+	sns.set_context(rc={"figure.figsize": (16, 16)})
+	f = plt.figure()
+
+	for d_num in range(1,10):
+		ax = plt.subplot(3, 3, d_num)
+		if densmet == 'mindensitychange':
+			y = [atom.mindensity[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'meandensitychange':
+			y = [atom.meandensity[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'maxdensitychange':
+			y = [atom.maxdensity[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bfactor':
+			y = [atom.Bfactor[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bfactorchange':
+			y = [atom.Bfactorchange[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'Bdamage':
+			y = [atom.bdam[d_num-1] for atom in atomsbychain_present[counter]]
+		elif densmet == 'bdamagechange':
+			y = [atom.bdamchange[d_num-1] for atom in atomsbychain_present[counter]]
+		else:
+			print 'unrecognised density metric\n---> terminating script'
+			sys.exit()
+
+		sns.violinplot([y[0:12],y[12:]], names=["nonRNA", "RNAbound"], color="deep", lw=2)
+
+		ax.text(0.05, 0.90, '# '+str(d_num), color='black',transform=ax.transAxes,fontsize=18)
+	
+	f.text(0.5, 0.04, 'Chain type', ha='center',fontsize=18)
+	f.text(0.04, 0.5, str(densmet)+' density loss', va='center', rotation='vertical',fontsize=18)
+
+	f.suptitle(str(densmet)+' vs chain number: '+\
+		       str(atomsbychain_present[counter][0].atomtype) + ' ' +\
+		       str(atomsbychain_present[counter][0].residuenum) + ' ' +\
+		       str(atomsbychain_present[counter][0].basetype),fontsize=24)
+	plt.setp(f.axes)
+
+	f.savefig('%s_vs_chain_number_%s_%s_%s_violinplot.png' %(str(densmet),str(atomsbychain_present[counter][0].atomtype),
+		       										        str(atomsbychain_present[counter][0].residuenum),
+		       											    str(atomsbychain_present[counter][0].basetype)))
+
+
+
+
+def numsurroundatoms_perchainplot(atomsbychain_present,atomtype,resitype,resinum):
+	# following on from formatting function above, plots a plot for number of surrounding
+	# atoms calculated for corresponding atom found in all chains against chain 
+	# number
+
+	# determine the desired atom by atom type, residue type and residue number
+	counter = -1
+	for atom in atomsbychain_present:
+		counter += 1
+		if (atom[0].atomtype == atomtype and
+		   atom[0].basetype == resitype and
+		   atom[0].residuenum == resinum):
+			break
+
+	# Create a figure instance
+	sns.set_palette("deep", desat=.6)
+	sns.set_context(rc={"figure.figsize": (16, 16)})
+	f = plt.figure()
+
+	x = range(1,len(atomsbychain_present[0])+1)
+	y = [atom.numsurroundatoms for atom in atomsbychain_present[counter]]
+
+
+	ax.plot(x, y,linewidth=3)
+	plt.axvline(11.5, color='#d64d4d', linestyle='dashed', linewidth=3)
+
+	
+	f.text(0.5, 0.04, 'Chain number', ha='center',fontsize=18)
+	f.text(0.04, 0.5, '# surrounding atoms', va='center', rotation='vertical',fontsize=18)
+
+	f.suptitle(str(densmet)+' vs chain number: '+\
+		       str(atomsbychain_present[counter][0].atomtype) + ' ' +\
+		       str(atomsbychain_present[counter][0].residuenum) + ' ' +\
+		       str(atomsbychain_present[counter][0].basetype),fontsize=24)
+	plt.setp(f.axes)
+
+	f.savefig('numsurroundatoms_vs_chain_number_%s_%s_%s_violinplot.png' %(str(atomsbychain_present[counter][0].atomtype),
+		       										        str(atomsbychain_present[counter][0].residuenum),
+		       											    str(atomsbychain_present[counter][0].basetype)))
 
 
 

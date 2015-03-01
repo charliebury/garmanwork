@@ -120,21 +120,11 @@ def maps2atmdensity(where,pdbname,mapfilname1,maptype1,mapfilname2,maptype2):
         print '---> success: The atom and density map are of compatible format!'
     
 
-#    # remove voxels not assigned to atoms
-#    print '------------------------------------------------'      
+    print '------------------------------------------------'      
     print 'Total number of voxels assigned to atoms: %s' %str(len(atmmap.vxls_val))
     sys.stdout.flush()
-#    # find list indices corresponding to non-atom voxels (zero values)
-#    
-#    nonatm_indices = [i for i, j in zip(count(),atmmap.vxls_val) if j == 0]    
-#    print 'Number of voxels not assigned to atoms: %s' %str(len(nonatm_indices)) 
-   
-#    print '---> removing these voxels'
-#    filteredlist_atms = multi_delete(atmmap.vxls_val,nonatm_indices)
-#    filteredlist_dens = multi_delete(densmap.vxls_val,nonatm_indices)
-#    print '    ---> success!'
 
-    
+
     # create list of voxel objects in class voxel_density 
     print '------------------------------------------------'
     print 'Combining voxel density and atom values...'
@@ -204,10 +194,13 @@ def maps2atmdensity(where,pdbname,mapfilname1,maptype1,mapfilname2,maptype2):
     sys.stdout.flush()
     for atom in PDBarray:
         if len(vxlsperatom[atom.atomnum-1].vxls) != 0:
-            atom.meandensity = np.mean([vxl.density for vxl in vxlsperatom[atom.atomnum-1].vxls])
-            atom.mediandensity = np.median([vxl.density for vxl in vxlsperatom[atom.atomnum-1].vxls])
-            atom.mindensity = min([vxl.density for vxl in vxlsperatom[atom.atomnum-1].vxls])
-            atom.maxdensity = max([vxl.density for vxl in vxlsperatom[atom.atomnum-1].vxls])
+            voxelsofatom = [vxl.density for vxl in vxlsperatom[atom.atomnum-1].vxls]
+            atom.meandensity = np.mean(voxelsofatom)
+            atom.mediandensity = np.median(voxelsofatom)
+            atom.mindensity = min(voxelsofatom)
+            atom.maxdensity = max(voxelsofatom)
+            # also determine number of voxels assigned per atom
+            atom.numvoxels = len(voxelsofatom)
     
     # check that the last step has worked
     # (may not be necessary to have but good to check when testing!)

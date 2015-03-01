@@ -10,11 +10,14 @@ import sys
 import os
 from colrowsec_to_cartesian import findCartesianTranslationVectors
 from PDBfile_manipulation import PDBtoCLASSARRAY_v2 as pdb2list
+from progbar import progress
+from scipy import spatial as spa
+
 
 def pdbCUR_symgen(inputpdbfile,outputpdbfile,space_group):
     # function to run CCP4 program pdbCUR to generate all symmetry related atoms of 
     # original structure 
-    print '---------------------------------------------------------------------------'
+    print '•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••'
     print 'Determining symmetrically related atoms to original structure, using pdbCUR'
 
     input1 = "/Applications/ccp4-6.4.0/bin/pdbcur "+\
@@ -66,15 +69,13 @@ def pdbCUR_symgen(inputpdbfile,outputpdbfile,space_group):
             counter += 1
     pdbout.close()
     print 'number of atoms in output pdb file: %s' %(str(counter))
-    print '--------------------------'
-
 
 
 def translate26cells(inputpdbfile,outpdbfile):
     # function to create an extended pdb file containing all atoms translated from
     # the original structure into the adjacent 26 unit cells surrounding the unit
     # cell the structure is situated in
-    print '------------------------------------------------'
+    print '\n••••••••••••••••••••••••••••••••••••••••••••••••'
     print 'Determining related atoms to original structure,\n'+\
           'translated into adjacent 26 unit cells'
 
@@ -123,8 +124,8 @@ def restrict14A(PDBarrayin,expanded_inputfile,outputpdbfile):
     # function to restrict the pdb file containing neighbouring 
     # atoms of original pdb structure to 14 Angstroms around
     # original structure
-    print '--------------------------------------------------------------'
-    print 'Restricting atoms to within 14 Angstroms of original structure'
+    print '\n••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••'
+    print 'Restricting atoms to within 14 Angstroms of original structure\n'
 
     # find max and min x values in original PDB file
     PDBarrayin.sort(key=lambda x: (x.X_coord))
@@ -166,7 +167,7 @@ def numsurroundatoms_calculate(initialPDBfile,PDBarray,threshold):
     # function determines for each atom in structure the number of neighbouring atoms within 
     # a threshold (defined above) for all atoms. For each atom, number of contacts added
     # as class attribute for atom
-    print '----------------------------------------------------'
+    print '••••••••••••••••••••••••••••••••••••••••••••••••••••'
     print 'Calculating contact number for atoms in structure...'
 
     # determine the correct extended pdb file, with atoms present up to 1 unit cell 
@@ -186,63 +187,98 @@ def numsurroundatoms_calculate(initialPDBfile,PDBarray,threshold):
     # original structure, and (c) to restrict to atoms only within 14 
     # Angstroms of the original structure.
     outputpdbfile1 = initialPDBfile[:-4]+'_pdbCURsymgenOUT.pdb'
-    pdbCUR_symgen(inputpdbfile1,outputpdbfile1,space_group)
+    #pdbCUR_symgen(inputpdbfile1,outputpdbfile1,space_group)
     outputpdbfile2 = initialPDBfile[:-4]+'_translate26cells.pdb'
-    translate26cells(outputpdbfile1,outputpdbfile2)
+    #translate26cells(outputpdbfile1,outputpdbfile2)
     extended_pdbfile = initialPDBfile[:-4]+'_restrict14A.pdb'
-    restrict14A(PDBarray,outputpdbfile2,extended_pdbfile)
+    #restrict14A(PDBarray,outputpdbfile2,extended_pdbfile)
+
+    # read through extended 14A pdb file and collect all xyz coords of atoms
+    # into a list allcoords
+    pdbin = open(extended_pdbfile,'r')
+    allcoords = []
+    for line in pdbin.readlines():
+        if ('ATOM' in line[0:5] or 'HETATM' in line[0:6]):
+            allcoords.append([float(line[30:38]),float(line[38:46]),float(line[46:54])])
+    pdbin.close()
 
     counter = 0
+    num_atoms = len(PDBarray)
     for atom in PDBarray:
-        print counter
         counter += 1
+
+        # unessential progress bar added here
+        progress(counter, num_atoms, suffix='')
+
         num_contacts = 0
 
-        # read through extended pdb file and determine how many atoms are neighbours 
-        # (within the specified threshold distance) 
-        pdbin = open(extended_pdbfile,'r')
-        for line in pdbin.readlines():
-            if ('ATOM' in line[0:5] or 'HETATM' in line[0:6]):
-                x = float(line[30:38])
-                y = float(line[38:46])
-                z = float(line[46:54])
+        atmxyz = np.array([[atom.X_coord,atom.Y_coord,atom.Z_coord]])
 
-                # determine whether the atom specified in this line has coordinates
-                # close to the current atom in PDBarray
-                if abs(x - atom.X_coord) < threshold or abs(atom.X_coord - x) < threshold:
-                    continue
-                if abs(y - atom.Y_coord) < threshold or abs(atom.Y_coord - y) < threshold:
-                    continue
-                if abs(z - atom.Z_coord) < threshold or abs(atom.Z_coord - z) < threshold:
-                    continue
-
-                distance = np.sqrt(np.square(atom.X_coord - x) +
-                                   np.square(atom.Y_coord - y) + 
-                                   np.square(atom.Z_coord - z))
-
-                if distance != 0 and distance < threshold:
-                    num_contacts += 1
-        # add the number of surrounding atoms as an attribute to the atom object            
+        # efficient distance calculation
+        dist = spa.distance.cdist(np.array(allcoords),atmxyz) 
+        sorted_dist = np.sort(dist,axis=None)
+        del dist
+        for element in sorted_dist:
+            if element < threshold:
+                num_contacts += 1
+            else:
+                break
+           
         atom.numsurroundatoms = num_contacts
-    print '---> success!'
+
+    print '\n---> success!'
 
 
 
 def bdamage_calculate(PDBarray):
+
     # function to calculate Bdamage style metric for each atom, to save bdam 
     # attribute for each atom
-    print '-------------------------------------------------------'
-    print 'Calculating bdam style metric for atoms in structure...'
+    print '\n•••••••••••••••••••••••••••••••••••••••••••••••••••••••'
+    print 'Calculating bdam style metric for atoms in structure...\n'
+
+    # first order by number of surrounding atoms
+    PDBarray.sort(key=lambda x: x.numsurroundatoms)
+    num_atoms = len(PDBarray)
+
+    # now loop through atoms and find number of atoms in same packing density bin
+    counter = 0
+    atom_indices = range(0,len(PDBarray))
     for atom in PDBarray:
+
+        # unessential loading bar add-in
+        progress(counter+1, num_atoms, suffix='')
+        counter += 1
+
         simpacking_bfactors = []
-        for otheratoms in PDBarray:
-            if round(atom.numsurroundatoms/10) == round(otheratoms.numsurroundatoms/10):
-                simpacking_bfactors.append(float(otheratoms.Bfactor))
+        k = -1
+        # unwantedindices list is designed to locate any atoms which have packing density
+        # below the current value and remove them from the subsequent loops
+        unwantedindices = []
+        for atomindex in atom_indices:
+
+            k += 1
+            otheratom = PDBarray[atomindex]
+
+            if round(atom.numsurroundatoms/10) == round(otheratom.numsurroundatoms/10):
+                simpacking_bfactors.append(float(otheratom.Bfactor))
+            # since atoms ordered by number of surrounding atoms, this part breaks out of 
+            # loop for current atom as soon as packing density bin is larger than that of
+            # current atom    
+            elif round(atom.numsurroundatoms/10) < round(otheratom.numsurroundatoms/10):
+                break
+            else:
+                unwantedindices.append(k)
+
+        # remove the indices from the search here if unwantedindices list is nonempty
+        if len(unwantedindices) != 0:
+            atom_indices = [i for j, i in enumerate(atom_indices) if j not in unwantedindices]
+
+
         bdam = float(atom.Bfactor)/(np.mean(simpacking_bfactors))
         
         atom.bdam = bdam
-    print '---> success!'
-
+    print '\n---> success!'
 
 
 def numsurroundatms_extract(initialPDBarray,laterPDBarray):
@@ -251,18 +287,36 @@ def numsurroundatms_extract(initialPDBarray,laterPDBarray):
     # same damage series)
 
     # loop through the later dataset and assign the corresponding num of 
-    # neighbouring atoms from the same atom in the initial dataset
+    # neighbouring atoms from the same atom in the initial dataset.
+    # Here the seenatoms list is filled as loop progresses to speed up loop
+    # by ensuring that atom in initialPDBarray cannot be called again once it
+    # has been found in the laterPDBarray list
+    print '\n•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••'
+    print 'Extracting number of surrounding atoms from initial PDB file...\n'
+    num_atoms = len(laterPDBarray)
+
+    # ensure atom list ordered by number of atom in structure (atomnum)
+    laterPDBarray.sort(key=lambda x: x.atomnum)
+    initialPDBarray.sort(key=lambda x: x.atomnum)
+
+    initfile_indices = range(0,len(initialPDBarray))
+    counter = 0
     for atom in laterPDBarray:
-        for otheratom in initialPDBarray:
+        counter += 1
+
+        # unessential loading bar add-in
+        progress(counter, num_atoms, suffix='')
+
+        k = -1
+        for atomindex in initfile_indices:
+            k += 1
+            otheratom = initialPDBarray[atomindex]
             if (atom.atomtype == otheratom.atomtype and
                atom.basetype == otheratom.basetype and
                atom.residuenum == otheratom.residuenum and
                atom.chaintype == otheratom.chaintype):
                 atom.numsurroundatoms = otheratom.numsurroundatoms
-
-
-
-
-
-        
-
+                break
+        initfile_indices.pop(k)  
+    print '\n---> success!'
+      

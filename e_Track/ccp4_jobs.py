@@ -189,12 +189,16 @@ def FFT_run(SFALL_runoutput,inputmergedmtzfile,outputmapfile,mtzlabels):
 		 	 "MAPOUT %s " %(str(outputmapfile))+\
 		 	 "SYMINFO /Applications/ccp4-6.4.0/lib/data/syminfo.lib "\
 
+	# if FOM damaged exists, sub this line in below:
+	# "LABIN F1=%s SIG1=%s F2=%s SIG2=%s " %(str(Fobs_dam),str(SIGobs_dam),str(Fobs_init),str(SIGobs_init)) +\
+	#       "PHI=%s W=%s W2=%s\n" %(str(PHIC_dam),str(FOM_dam),str(FOM_init)) +\
+
 	input2 = "AXIS %s %s %s\n" %(str(SFALL_runoutput.fastaxis),str(SFALL_runoutput.medaxis),str(SFALL_runoutput.slowaxis))+\
 			 "title FTT DENSITY MAP RUN\n"+\
 			 "grid %s %s %s\n" %(str(SFALL_runoutput.gridsamp1),str(SFALL_runoutput.gridsamp2),str(SFALL_runoutput.gridsamp3))+\
 			 "xyzlim 0 1 0 1 0 1\n"+\
-			 "LABIN F1=%s SIG1=%s F2=%s SIG2=%s " %(str(Fobs_dam),str(SIGobs_dam),str(Fobs_init),str(SIGobs_init)) +\
-			       "PHI=%s W=%s W2=%s\n" %(str(PHIC_dam),str(FOM_dam),str(FOM_init)) +\
+			  "LABIN F1=%s SIG1=%s F2=%s SIG2=%s " %(str(Fobs_dam),str(SIGobs_dam),str(Fobs_init),str(SIGobs_init)) +\
+			       "PHI=%s W=%s\n" %(str(PHIC_dam),str(FOM_init)) +\
 			 "SCALE F1 1.0 0.0 F2 1.0 0.0\n"+\
 			 "END"
 

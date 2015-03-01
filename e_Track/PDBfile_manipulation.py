@@ -329,27 +329,32 @@ def multiARRAY_diffatomnumbers(data_list):
 
     i = 0
     num_atoms = len(data_list[0])
-    
+
     for atom in data_list[0]:
-        i += 1
+
         # unessential loading bar add-in
+        i += 1
         progress(i, num_atoms, suffix='')
 
-        atm_counter = 0
+        atm_counter = 1
         
-        Bfactor_comb = []
-        Occupancy_comb = []
-        meandensity_comb = []
-        maxdensity_comb = []
-        mindensity_comb = []
-        mediandensity_comb = []
-        bdam_comb = []
-        bdamchange_comb = []
-        Bfactorchange_comb = []
+        Bfactor_comb = [atom.Bfactor]
+        Occupancy_comb = [atom.Occupancy]
+        meandensity_comb = [atom.meandensity]
+        maxdensity_comb = [atom.maxdensity]
+        mindensity_comb = [atom.mindensity]
+        mediandensity_comb = [atom.mediandensity]
+        bdam_comb = [atom.bdam]
+        numvoxels_comb = [atom.numvoxels]
         
+        # list of index of same atom in each later dataset
+        indexindataset = []
+
         # check whether atom in all datasets:
-        for dataset in data_list:        
-            for otheratom in dataset:   
+        for dataset in data_list[1:]:
+            k = -1        
+            for otheratom in dataset: 
+                k += 1  
                 if (atom.residuenum == otheratom.residuenum and 
                     atom.atomtype == otheratom.atomtype and 
                     atom.basetype == otheratom.basetype and 
@@ -363,8 +368,15 @@ def multiARRAY_diffatomnumbers(data_list):
                     mindensity_comb.append(otheratom.mindensity)
                     mediandensity_comb.append(otheratom.mediandensity)
                     bdam_comb.append(otheratom.bdam)
-                    bdamchange_comb.append(otheratom.bdamchange)
-                    Bfactorchange_comb.append(otheratom.Bfactorchange)
+                    numvoxels_comb.append(otheratom.numvoxels)
+                    indexindataset.append(k)
+                    break
+
+        # remove this located atom from the later dataset now that it
+        # has been located --> to make loop faster 
+        for j in range(1,len(indexindataset)+1):
+            if indexindataset[j-1] != -1:
+                data_list[j].pop(indexindataset[j-1])
                         
         if atm_counter != len(data_list):
             print 'Atom not found in all datasets!'
@@ -400,11 +412,10 @@ def multiARRAY_diffatomnumbers(data_list):
             y.mindensity = mindensity_comb
             y.mediandensity = mediandensity_comb
             y.bdam = bdam_comb
-            y.bdamchange = bdamchange_comb
-            y.Bfactorchange = Bfactorchange_comb
+            y.numvoxels = numvoxels_comb
                
             PDBdoses.append(y)
-    print '------------------------------------------------'    
+    print '\n------------------------------------------------'    
     print 'Number of atoms removed since not in all datasets: %s' %str(notincludedatmcounter)
     print '---> Finished!'
     return PDBdoses
